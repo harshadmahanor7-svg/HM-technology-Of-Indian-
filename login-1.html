@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HM Technology — Login</title>
+<style>
+/* ===========================================================
+   HM TECHNOLOGY — design tokens
+   Display: Space Grotesk | Body: Inter
+   Palette: lavender-white bg, electric violet + teal + coral
+=========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg: #F6F4FF;
+  --bg-soft: #EFEBFF;
+  --ink: #1B1030;
+  --ink-soft: #58507A;
+  --primary: #6C3CE9;
+  --primary-dark: #4B22B8;
+  --secondary: #00C2B8;
+  --accent: #FF6B4A;
+  --accent2: #FFC93C;
+  --card: #FFFFFF;
+  --border: #E3DDFB;
+  --radius: 18px;
+  --shadow: 0 12px 32px rgba(76, 34, 184, 0.14);
+  --shadow-lg: 0 24px 60px rgba(76, 34, 184, 0.22);
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+*{ box-sizing: border-box; }
+html{ scroll-behavior: smooth; }
+body{
+  margin:0;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+a{ color: inherit; text-decoration:none; }
+button{ font-family: inherit; cursor:pointer; }
+::selection{ background: var(--accent2); color: var(--ink); }
+
+/* ---------- mesh background: waves + glow blobs (signature motif) ---------- */
+.signal-bg{
+  position: fixed; inset:0; z-index:-1; overflow:hidden; background: var(--bg);
+}
+.signal-bg::before, .signal-bg::after{
+  content:""; position:absolute; border-radius:50%; filter: blur(90px); opacity:.45;
+}
+.signal-bg::before{
+  width: 520px; height:520px; top:-160px; right:-160px;
+  background: radial-gradient(circle, var(--primary), transparent 70%);
+  animation: drift1 16s ease-in-out infinite;
+}
+.signal-bg::after{
+  width: 480px; height:480px; bottom:-180px; left:-140px;
+  background: radial-gradient(circle, var(--secondary), transparent 70%);
+  animation: drift2 18s ease-in-out infinite;
+}
+@keyframes drift1{ 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(-40px,50px) scale(1.15);} }
+@keyframes drift2{ 0%,100%{ transform: translate(0,0) scale(1);} 50%{ transform: translate(50px,-40px) scale(1.1);} }
+.signal-bg .blob3{
+  position:absolute; width:360px; height:360px; border-radius:50%; filter: blur(90px); opacity:.32;
+  top:40%; left:45%; background: radial-gradient(circle, var(--accent2), transparent 70%);
+  animation: drift1 22s ease-in-out infinite reverse;
+}
+.signal-bg svg{ position:absolute; width:140%; left:-20%; opacity:.25; }
+.signal-bg .s1{ top:-4%; }
+.signal-bg .s2{ bottom:-6%; transform: scaleY(-1); }
+.signal-bg .grid-overlay{
+  position:absolute; inset:0;
+  background-image: linear-gradient(rgba(108,60,233,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(108,60,233,.05) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+
+/* ---------- top bar (glass, sticky) ---------- */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 16px 6vw;
+  position: sticky; top:0; z-index: 50;
+  background: rgba(246,244,255,.7);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border-bottom: 1px solid rgba(227,221,251,.7);
+}
+.brand{
+  display:flex; align-items:center; gap:10px;
+  font-family: var(--font-display); font-weight:700; font-size:1.25rem;
+  color: var(--ink);
+}
+.brand .dot{
+  width:16px; height:16px; border-radius:50%; position:relative;
+  background: radial-gradient(circle at 30% 30%, var(--accent2), var(--primary) 60%, var(--secondary));
+  box-shadow: 0 0 0 4px rgba(108,60,233,.12);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+.brand small{ display:block; font-family: var(--font-body); font-weight:500; font-size:.62rem; letter-spacing:.14em; color: var(--ink-soft); }
+
+.lang-switch{
+  display:flex; gap:4px; background: var(--card); border:1px solid var(--border);
+  border-radius: 999px; padding:4px; box-shadow: 0 4px 14px rgba(76,34,184,.08);
+}
+.lang-switch button{
+  border:none; background:transparent; padding:7px 15px; border-radius:999px;
+  font-size:.82rem; font-weight:600; color: var(--ink-soft); transition: all .2s ease;
+}
+.lang-switch button:hover{ color: var(--primary); }
+.lang-switch button.active{
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color:#fff; box-shadow: 0 6px 16px rgba(108,60,233,.35);
+}
+
+/* ---------- generic containers ---------- */
+.wrap{ max-width: 1180px; margin:0 auto; padding: 0 6vw; }
+.card{
+  background: var(--card); border:1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.btn{
+  position:relative; overflow:hidden;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding: 14px 28px; border-radius: 999px; border:none;
+  font-weight:700; font-size:.95rem; font-family: var(--font-display);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color:#fff; box-shadow: 0 10px 24px rgba(108,60,233,.32);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.btn::after{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+}
+.btn:hover::after{ transform: translateX(120%); transition: transform .6s ease; }
+.btn:hover{ transform: translateY(-3px); box-shadow: 0 18px 34px rgba(108,60,233,.42); }
+.btn:active{ transform: translateY(0); }
+.btn.ghost{
+  background: transparent; color: var(--primary); box-shadow:none;
+  border: 2px solid var(--primary);
+}
+.btn.accent{ background: linear-gradient(135deg, var(--accent), #FF8F42); box-shadow: 0 10px 24px rgba(255,107,74,.32); }
+
+.eyebrow{
+  font-family: var(--font-display); font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+  font-size:.72rem; color: var(--secondary); display:inline-flex; align-items:center; gap:8px;
+}
+.eyebrow::before{ content:""; width:22px; height:2px; background: linear-gradient(90deg, var(--secondary), var(--primary)); border-radius:2px; }
+h1,h2,h3{ font-family: var(--font-display); margin:0 0 .4em; }
+
+.gradient-text{
+  background: linear-gradient(120deg, var(--primary) 10%, var(--secondary) 50%, var(--accent) 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  background-size: 200% auto;
+  animation: shine 6s linear infinite;
+}
+@keyframes shine{ to{ background-position: 200% center; } }
+
+@keyframes fadeUp{ from{ opacity:0; transform: translateY(18px);} to{ opacity:1; transform:none; } }
+.fade-up{ animation: fadeUp .7s cubic-bezier(.2,.7,.3,1) both; }
+
+/* ===================== LOGIN PAGE ===================== */
+.auth-shell{
+  min-height:100vh; display:flex; align-items:center; justify-content:center; padding: 24px;
+}
+.auth-grid{
+  display:grid; grid-template-columns: 1.1fr 1fr; max-width: 980px; width:100%;
+  overflow:hidden; border-radius: 26px; box-shadow: var(--shadow-lg);
+  animation: fadeUp .7s cubic-bezier(.2,.7,.3,1) both;
+}
+.auth-visual{
+  background: linear-gradient(155deg, var(--primary) 0%, #8A5CF2 45%, var(--secondary) 100%);
+  color:#fff; padding: 48px 40px; display:flex; flex-direction:column; justify-content:space-between;
+  position:relative; overflow:hidden;
+}
+.auth-visual::before{
+  content:""; position:absolute; width:260px; height:260px; border-radius:50%;
+  border: 1.5px solid rgba(255,255,255,.25); top:-90px; right:-90px;
+}
+.auth-visual::after{
+  content:""; position:absolute; width:180px; height:180px; border-radius:50%;
+  border: 1.5px solid rgba(255,255,255,.18); bottom:-60px; left:-60px;
+}
+.auth-visual .pulse-orb{
+  width: 120px; height:120px; border-radius:50%; position:relative; z-index:1;
+  background: radial-gradient(circle at 35% 30%, #fff, var(--accent2) 40%, var(--accent) 100%);
+  box-shadow: 0 0 60px rgba(255,201,60,.55);
+  animation: pulse 2.6s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{ transform: scale(1); }
+  50%{ transform: scale(1.08); }
+}
+.auth-visual h2{ font-size:1.6rem; line-height:1.3; margin-top: 24px; position:relative; z-index:1; }
+.auth-visual p{ opacity:.9; font-size:.92rem; position:relative; z-index:1; }
+.auth-form{ background: var(--card); padding: 48px 40px; }
+.field{ margin-bottom: 18px; }
+.field label{ display:block; font-size:.82rem; font-weight:600; margin-bottom:6px; color: var(--ink-soft); }
+.field input{
+  width:100%; padding: 13px 16px; border-radius: 12px; border: 1.5px solid var(--border);
+  font-size: .95rem; font-family: inherit; background: var(--bg-soft); color: var(--ink);
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.field input:focus{ outline: none; border-color: var(--primary); background:#fff; box-shadow: 0 0 0 4px rgba(108,60,233,.12); }
+.auth-form .btn{ width:100%; margin-top: 8px; }
+.auth-note{ font-size:.82rem; color: var(--ink-soft); margin-top: 16px; text-align:center; }
+.error-msg{ color:#D14343; font-size:.82rem; min-height: 18px; margin-top: -6px; margin-bottom: 8px; }
+
+/* ===================== PROCESSING PAGE ===================== */
+.processing-shell{
+  min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 26px; text-align:center;
+}
+.loader-orb{
+  width: 96px; height:96px; border-radius: 50%;
+  border: 6px solid var(--border); border-top-color: var(--primary); border-right-color: var(--secondary);
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 40px rgba(108,60,233,.18);
+}
+@keyframes spin{ to{ transform: rotate(360deg); } }
+.progress-track{
+  width: 320px; max-width: 70vw; height: 10px; border-radius: 999px; background: var(--bg-soft); overflow:hidden;
+  box-shadow: inset 0 2px 6px rgba(76,34,184,.12);
+}
+.progress-fill{
+  height:100%; width:0%; border-radius:999px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent2));
+  background-size: 200% auto;
+  animation: shine 2s linear infinite;
+  transition: width .18s ease;
+}
+.processing-shell h2{ font-size: 1.3rem; }
+.processing-shell p{ color: var(--ink-soft); }
+
+/* ===================== HOME PAGE ===================== */
+.hero{
+  padding: 50px 0 70px; display:grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items:center;
+}
+.hero h1{ font-size: clamp(2.1rem, 4vw, 3.4rem); line-height:1.08; }
+.hero p{ color: var(--ink-soft); font-size:1.05rem; max-width: 46ch; }
+.hero-actions{ display:flex; gap:14px; margin-top: 26px; flex-wrap:wrap; }
+.hero-art{
+  position:relative; border-radius: 26px; overflow:hidden; aspect-ratio: 4/3;
+  box-shadow: var(--shadow-lg);
+  transform: rotate(1.5deg);
+  transition: transform .4s ease;
+}
+.hero-art:hover{ transform: rotate(0deg) scale(1.015); }
+.hero-art img{ width:100%; height:100%; object-fit:cover; display:block; }
+.hero-art::after{
+  content:""; position:absolute; inset:0;
+  background: linear-gradient(160deg, rgba(108,60,233,.28), rgba(0,194,184,.18));
+}
+.hero-badge{
+  position:absolute; z-index:2; background: rgba(255,255,255,.9); backdrop-filter: blur(6px);
+  padding: 10px 16px; border-radius: 14px; box-shadow: var(--shadow); font-family: var(--font-display);
+  font-weight:700; font-size:.82rem; display:flex; align-items:center; gap:8px;
+}
+.hero-badge.b1{ top:18px; left:-18px; color: var(--primary); }
+.hero-badge.b2{ bottom:18px; right:-14px; color: var(--secondary); animation: floaty 3.4s ease-in-out infinite; }
+@keyframes floaty{ 0%,100%{ transform: translateY(0);} 50%{ transform: translateY(-10px);} }
+
+.search-bar{
+  display:flex; align-items:center; gap:10px; background: var(--card); border:1.5px solid var(--border);
+  border-radius: 999px; padding: 8px 8px 8px 20px; box-shadow: var(--shadow); margin: 0 0 48px;
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+.search-bar:focus-within{ border-color: var(--primary); box-shadow: var(--shadow-lg); }
+.search-bar input{
+  flex:1; border:none; outline:none; background:transparent; font-size:.98rem; font-family:inherit; color: var(--ink);
+}
+.search-bar button{
+  border:none; background: linear-gradient(135deg, var(--primary), var(--secondary)); color:#fff;
+  padding: 11px 24px; border-radius: 999px; font-weight:700; font-family: var(--font-display);
+  transition: transform .15s ease;
+}
+.search-bar button:hover{ transform: translateY(-2px); }
+.search-empty{ display:none; text-align:center; color: var(--ink-soft); padding: 30px 0; }
+
+.section-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 24px; }
+
+.grid-3{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 64px; }
+.feature-card{
+  padding: 28px; position:relative; overflow:hidden;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.feature-card::before{
+  content:""; position:absolute; inset:0; border-radius: inherit; padding:1.5px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity:0; transition: opacity .25s ease;
+}
+.feature-card:hover{ transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+.feature-card:hover::before{ opacity:1; }
+.feature-card .icon-tile{
+  width:52px; height:52px; border-radius: 15px; margin-bottom: 18px;
+  display:flex; align-items:center; justify-content:center; font-size:1.4rem;
+  background: linear-gradient(135deg, var(--bg-soft), #fff);
+  border:1px solid var(--border);
+  transition: transform .3s ease;
+}
+.feature-card:hover .icon-tile{ transform: scale(1.12) rotate(-6deg); }
+.feature-card h3{ font-size: 1.08rem; }
+.feature-card p{ color: var(--ink-soft); font-size:.9rem; line-height:1.6; margin:0; }
+
+.gallery{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 64px; }
+.gallery figure{ margin:0; border-radius: 18px; overflow:hidden; aspect-ratio: 1; box-shadow: var(--shadow); position:relative; }
+.gallery img{ width:100%; height:100%; object-fit:cover; display:block; transition: transform .45s ease, filter .45s ease; filter: saturate(1); }
+.gallery figure:hover img{ transform: scale(1.1); }
+.gallery figure::before{
+  content:""; position:absolute; inset:0; z-index:1; opacity:0; transition: opacity .3s ease;
+  background: linear-gradient(160deg, rgba(108,60,233,.35), rgba(0,194,184,.25));
+}
+.gallery figure:hover::before{ opacity:1; }
+.gallery figcaption{
+  position:absolute; left:0; right:0; bottom:0; padding: 12px 14px; font-size:.78rem; font-weight:600;
+  color:#fff; background: linear-gradient(0deg, rgba(27,16,48,.8), transparent); z-index:2;
+}
+
+footer{
+  border-top: 1px solid var(--border); padding: 32px 6vw 44px; margin-top: 40px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; color: var(--ink-soft); font-size:.85rem;
+}
+
+/* ---------- chatbot widget ---------- */
+.chat-toggle{
+  position:fixed; right: 26px; bottom: 26px; width: 64px; height: 64px; border-radius:50%; border:none;
+  background: radial-gradient(circle at 32% 28%, #fff, var(--accent2) 35%, var(--primary) 100%);
+  box-shadow: 0 14px 30px rgba(108,60,233,.4); font-size: 1.5rem; z-index: 60;
+  animation: pulse 3s ease-in-out infinite;
+  transition: transform .2s ease;
+}
+.chat-toggle:hover{ transform: scale(1.08) rotate(-6deg); }
+.chat-panel{
+  position:fixed; right: 26px; bottom: 104px; width: 340px; max-width: 88vw; max-height: 460px;
+  background: var(--card); border-radius: 22px; box-shadow: var(--shadow-lg); border:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden; z-index: 60;
+  transform: translateY(16px) scale(.97); opacity:0; pointer-events:none; transition: all .22s cubic-bezier(.2,.7,.3,1);
+}
+.chat-panel.open{ transform: translateY(0) scale(1); opacity:1; pointer-events:auto; }
+.chat-head{
+  background: linear-gradient(135deg, var(--primary), var(--secondary)); color:#fff; padding: 15px 18px;
+  display:flex; align-items:center; justify-content:space-between; font-family: var(--font-display); font-weight:700;
+}
+.chat-head button{ background:none; border:none; color:#fff; font-size:1.1rem; opacity:.85; transition: opacity .2s; }
+.chat-head button:hover{ opacity:1; }
+.chat-body{ flex:1; overflow-y:auto; padding: 16px; display:flex; flex-direction:column; gap: 10px; background: linear-gradient(180deg, var(--bg-soft), #fff 60%); }
+.msg{ max-width: 82%; padding: 10px 14px; border-radius: 15px; font-size:.86rem; line-height:1.45; animation: fadeUp .3s ease both; }
+.msg.bot{ background: #fff; border: 1px solid var(--border); align-self:flex-start; border-bottom-left-radius:4px; }
+.msg.user{ background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+.chat-input{ display:flex; border-top: 1px solid var(--border); background:#fff; }
+.chat-input input{
+  flex:1; border:none; padding: 13px 16px; font-family: inherit; font-size:.86rem; outline:none;
+}
+.chat-input button{ border:none; background: var(--primary); color:#fff; padding: 0 20px; font-weight:700; transition: background .2s; }
+.chat-input button:hover{ background: var(--primary-dark); }
+
+@media (max-width: 860px){
+  .auth-grid{ grid-template-columns: 1fr; }
+  .auth-visual{ display:none; }
+  .hero{ grid-template-columns: 1fr; }
+  .hero-badge{ display:none; }
+  .grid-3{ grid-template-columns: 1fr; }
+  .gallery{ grid-template-columns: repeat(2,1fr); }
+  .topbar{ flex-direction:column; gap:12px; }
+}
+
+/* ===================== AUTOMATION / ROBOTICS STRIP ===================== */
+.automation-section{ margin-bottom: 64px; }
+.automation-panel{
+  position:relative; border-radius: 28px; overflow:hidden; padding: 46px 6vw;
+  background: linear-gradient(135deg, #1B1030 0%, #3A1E86 55%, #00695f 130%);
+  color:#fff;
+}
+.automation-panel .eyebrow{ color: var(--accent2); }
+.automation-panel .eyebrow::before{ background: linear-gradient(90deg, var(--accent2), var(--accent)); }
+.automation-panel h2{ color:#fff; max-width: 26ch; }
+.automation-panel p{ color: rgba(255,255,255,.78); max-width: 52ch; }
+
+.robot-track{
+  position:relative; height: 220px; margin-top: 30px;
+  display:flex; align-items:center; justify-content:space-evenly; gap: 10px; flex-wrap:wrap;
+}
+.robot-chip{
+  --c1:#FF6B4A; --c2:#FFC93C;
+  width: 84px; height: 84px; border-radius: 24px;
+  display:flex; align-items:center; justify-content:center; font-size: 2rem;
+  background: linear-gradient(145deg, var(--c1), var(--c2));
+  box-shadow: 0 16px 32px rgba(0,0,0,.28);
+  animation: bob 3.2s ease-in-out infinite;
+}
+.robot-chip.c2{ --c1:#6C3CE9; --c2:#00C2B8; animation-duration: 3.8s; animation-delay:.3s; }
+.robot-chip.c3{ --c1:#00C2B8; --c2:#FFC93C; animation-duration: 2.9s; animation-delay:.6s; }
+.robot-chip.c4{ --c1:#FF6B4A; --c2:#6C3CE9; animation-duration: 4.2s; animation-delay:.15s; }
+.robot-chip.c5{ --c1:#FFC93C; --c2:#00C2B8; animation-duration: 3.5s; animation-delay:.45s; }
+@keyframes bob{
+  0%,100%{ transform: translateY(0) rotate(-3deg); }
+  50%{ transform: translateY(-26px) rotate(4deg); }
+}
+.robot-caption{ text-align:center; font-size:.72rem; margin-top:10px; color: rgba(255,255,255,.7); font-family: var(--font-display); letter-spacing:.06em; }
+.robot-wrap{ display:flex; flex-direction:column; align-items:center; }
+
+.automation-steps{
+  display:grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-top: 38px;
+}
+.astep{
+  background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding: 18px;
+  backdrop-filter: blur(6px);
+}
+.astep .num{ font-family: var(--font-display); font-weight:700; color: var(--accent2); font-size:1.1rem; }
+.astep p{ color: rgba(255,255,255,.82); font-size:.84rem; margin: 6px 0 0; }
+
+/* ===================== VIDEO SHOWCASE ===================== */
+.video-section{ margin-bottom: 64px; }
+.video-frame{
+  position:relative; border-radius: 26px; overflow:hidden; box-shadow: var(--shadow-lg);
+  border: 3px solid transparent;
+  background: linear-gradient(var(--bg), var(--bg)) padding-box,
+              linear-gradient(120deg, var(--primary), var(--secondary), var(--accent2)) border-box;
+}
+.video-frame video{ width:100%; display:block; aspect-ratio: 16/8; object-fit:cover; }
+.video-frame .video-tag{
+  position:absolute; top:16px; left:16px; background: rgba(27,16,48,.65); color:#fff; backdrop-filter: blur(6px);
+  padding: 6px 14px; border-radius: 999px; font-size:.72rem; font-weight:700; font-family: var(--font-display);
+  display:flex; align-items:center; gap:6px;
+}
+.video-tag .rec-dot{ width:8px; height:8px; border-radius:50%; background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+
+@media (max-width: 860px){
+  .automation-steps{ grid-template-columns: repeat(2,1fr); }
+  .robot-chip{ width:64px; height:64px; font-size:1.5rem; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="signal-bg">
+  <div class="grid-overlay"></div>
+  <div class="blob3"></div>
+  <svg class="s1" viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg"><path d="M0,100 C 200,20 300,180 500,100 S 800,20 1000,100 1200,180 1440,100" stroke="#6C3CE9" stroke-width="2" fill="none"/></svg>
+  <svg class="s2" viewBox="0 0 1440 200" xmlns="http://www.w3.org/2000/svg"><path d="M0,100 C 200,20 300,180 500,100 S 800,20 1000,100 1200,180 1440,100" stroke="#00C2B8" stroke-width="2" fill="none"/></svg>
+</div>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span><div>HM Technology<small data-i18n="brand_tag">AI-POWERED TECHNOLOGY</small></div></div>
+  <div class="lang-switch">
+    <button data-lang="mr">मराठी</button>
+    <button data-lang="hi">हिंदी</button>
+    <button data-lang="en">English</button>
+  </div>
+</div>
+
+<div class="auth-shell">
+  <div class="auth-grid">
+    <div class="auth-visual">
+      <div class="pulse-orb"></div>
+      <div>
+        <h2 data-i18n="login_title">Welcome back</h2>
+        <p data-i18n="login_sub">Where ideas connect, at the speed of signal.</p>
+      </div>
+    </div>
+    <div class="auth-form card" style="border-radius:0;border:none;box-shadow:none;">
+      <h1 data-i18n="login_title" style="font-size:1.5rem;">Welcome back</h1>
+      <form id="loginForm">
+        <div class="field">
+          <label data-i18n="login_email" for="email">Email address</label>
+          <input type="email" id="email" placeholder="you@example.com" required>
+        </div>
+        <div class="field">
+          <label data-i18n="login_password" for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+        <div class="error-msg" id="loginError"></div>
+        <button type="submit" class="btn" data-i18n="login_btn">Log in to HM Technology</button>
+      </form>
+      <p class="auth-note" data-i18n="login_note">New here? Just enter any email &amp; password to explore the demo.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===========================================================
+   HM TECHNOLOGY — shared script
+   Handles: language switching, login, processing redirect,
+   site search, AI chatbot (rule-based, offline)
+=========================================================== */
+
+const HM_I18N = {
+  en: {
+    brand_tag: "AI-POWERED TECHNOLOGY",
+    login_title: "Welcome back",
+    login_sub: "Where ideas connect, at the speed of signal.",
+    login_email: "Email address",
+    login_password: "Password",
+    login_btn: "Log in to HM Technology",
+    login_note: "New here? Just enter any email & password to explore the demo.",
+    login_error: "Please enter both email and password.",
+    processing_title: "Setting up your workspace",
+    processing_sub: "Connecting to HM Technology servers…",
+    hero_eyebrow: "HM TECHNOLOGY",
+    hero_title: "Human-made intelligence, machine-grade speed.",
+    hero_desc: "HM Technology builds AI tools, cloud systems and digital products that help people and businesses move faster — designed in India, built for the world.",
+    hero_cta1: "Explore products",
+    hero_cta2: "Talk to our AI",
+    search_placeholder: "Search products, services, articles…",
+    search_btn: "Search",
+    search_empty: "No results found. Try another keyword.",
+    features_eyebrow: "WHAT WE BUILD",
+    features_title: "Products that power your day",
+    f1_title: "HM Assistant",
+    f1_desc: "A conversational AI assistant that understands Marathi, Hindi and English — built right into every HM product.",
+    f2_title: "Cloud Suite",
+    f2_desc: "Secure, scalable cloud infrastructure for startups and enterprises to host, deploy and grow.",
+    f3_title: "Smart Analytics",
+    f3_desc: "Real-time dashboards that turn raw data into decisions your team can act on instantly.",
+    gallery_eyebrow: "INSIDE HM",
+    gallery_title: "A glimpse of our world",
+    g1: "Our engineering floor",
+    g2: "AI research lab",
+    g3: "Team collaboration",
+    g4: "Product design studio",
+    footer_rights: "© 2026 HM Technology. All rights reserved.",
+    footer_tag: "Built with curiosity, shipped with care.",
+    auto_eyebrow: "AUTOMATION AT WORK",
+    auto_title: "Robots that work while you sleep",
+    auto_desc: "HM Technology's automation engine runs background bots that sync data, answer queries and monitor systems — 24 hours a day, in every language.",
+    bot1: "SYNC BOT", bot2: "TASK BOT", bot3: "MONITOR BOT", bot4: "CHAT BOT", bot5: "REPORT BOT",
+    astep1: "Data comes in — from sensors and apps.",
+    astep2: "Bots clean and verify that data.",
+    astep3: "AI decides and plans the next step.",
+    astep4: "You just see the result — instantly.",
+    video_eyebrow: "SEE IT IN ACTION",
+    video_title: "A day inside HM Technology",
+    video_note: "Sample showcase video — replace this with your own product demo clip anytime.",
+    chat_title: "HM Assistant",
+    chat_greet: "Namaste! I'm the HM Assistant. Ask me about our products, or say hello in Marathi, Hindi or English.",
+    chat_placeholder: "Type a message…",
+    chat_fallback: "That's a great question — our team would love to help. Try asking about 'products', 'pricing' or 'contact'."
+  },
+  hi: {
+    brand_tag: "एआई-संचालित तकनीक",
+    login_title: "वापसी पर स्वागत है",
+    login_sub: "जहाँ विचार सिग्नल की गति से जुड़ते हैं।",
+    login_email: "ईमेल पता",
+    login_password: "पासवर्ड",
+    login_btn: "HM टेक्नोलॉजी में लॉगिन करें",
+    login_note: "नए हैं? डेमो देखने के लिए कोई भी ईमेल और पासवर्ड डालें।",
+    login_error: "कृपया ईमेल और पासवर्ड दोनों भरें।",
+    processing_title: "आपका वर्कस्पेस तैयार हो रहा है",
+    processing_sub: "HM टेक्नोलॉजी सर्वर से जुड़ रहे हैं…",
+    hero_eyebrow: "एचएम टेक्नोलॉजी",
+    hero_title: "मानव जैसी सोच, मशीन जैसी रफ्तार।",
+    hero_desc: "HM टेक्नोलॉजी एआई टूल्स, क्लाउड सिस्टम और डिजिटल प्रोडक्ट बनाती है जो लोगों और व्यवसायों को तेज़ी से आगे बढ़ने में मदद करते हैं — भारत में डिज़ाइन किया गया, दुनिया के लिए बनाया गया।",
+    hero_cta1: "प्रोडक्ट देखें",
+    hero_cta2: "एआई से बात करें",
+    search_placeholder: "प्रोडक्ट, सेवाएं, लेख खोजें…",
+    search_btn: "खोजें",
+    search_empty: "कोई परिणाम नहीं मिला। दूसरा शब्द आज़माएं।",
+    features_eyebrow: "हम क्या बनाते हैं",
+    features_title: "प्रोडक्ट जो आपके दिन को आसान बनाते हैं",
+    f1_title: "HM असिस्टेंट",
+    f1_desc: "एक बातचीत करने वाला एआई असिस्टेंट जो मराठी, हिंदी और अंग्रेज़ी समझता है — हर HM प्रोडक्ट में शामिल।",
+    f2_title: "क्लाउड सुइट",
+    f2_desc: "स्टार्टअप्स और एंटरप्राइज़ के लिए सुरक्षित, स्केलेबल क्लाउड इंफ्रास्ट्रक्चर।",
+    f3_title: "स्मार्ट एनालिटिक्स",
+    f3_desc: "रीयल-टाइम डैशबोर्ड जो डेटा को तुरंत फैसलों में बदल देते हैं।",
+    gallery_eyebrow: "एचएम के अंदर",
+    gallery_title: "हमारी दुनिया की एक झलक",
+    g1: "हमारी इंजीनियरिंग टीम",
+    g2: "एआई रिसर्च लैब",
+    g3: "टीम सहयोग",
+    g4: "प्रोडक्ट डिज़ाइन स्टूडियो",
+    footer_rights: "© 2026 एचएम टेक्नोलॉजी। सर्वाधिकार सुरक्षित।",
+    footer_tag: "जिज्ञासा से बना, देखभाल के साथ पेश।",
+    auto_eyebrow: "ऑटोमेशन काम पर",
+    auto_title: "रोबोट जो आपके सोते समय भी काम करते हैं",
+    auto_desc: "HM टेक्नोलॉजी का ऑटोमेशन इंजन बैकग्राउंड में बॉट्स चलाता है जो डेटा सिंक करते हैं, सवालों के जवाब देते हैं और सिस्टम पर नज़र रखते हैं — दिन-रात, हर भाषा में।",
+    bot1: "सिंक बॉट", bot2: "टास्क बॉट", bot3: "मॉनिटर बॉट", bot4: "चैट बॉट", bot5: "रिपोर्ट बॉट",
+    astep1: "डेटा आता है — सेंसर और ऐप्स से।",
+    astep2: "बॉट्स उस डेटा को साफ और जांचते हैं।",
+    astep3: "एआई फैसला लेता है और अगला कदम तय करता है।",
+    astep4: "आपको बस नतीजा दिखता है — तुरंत।",
+    video_eyebrow: "काम करते हुए देखें",
+    video_title: "HM टेक्नोलॉजी के अंदर एक दिन",
+    video_note: "सैंपल शोकेस वीडियो — इसे कभी भी अपने खुद के प्रोडक्ट डेमो से बदलें।",
+    chat_title: "HM असिस्टेंट",
+    chat_greet: "नमस्ते! मैं HM असिस्टेंट हूं। हमारे प्रोडक्ट्स के बारे में पूछें, या मराठी, हिंदी या अंग्रेज़ी में हैलो कहें।",
+    chat_placeholder: "यहाँ लिखें…",
+    chat_fallback: "बढ़िया सवाल है — हमारी टीम मदद करना पसंद करेगी। 'products', 'pricing' या 'contact' के बारे में पूछें।"
+  },
+  mr: {
+    brand_tag: "एआय-चालित तंत्रज्ञान",
+    login_title: "पुन्हा स्वागत आहे",
+    login_sub: "जिथे कल्पना सिग्नलच्या वेगाने जोडल्या जातात.",
+    login_email: "ईमेल पत्ता",
+    login_password: "पासवर्ड",
+    login_btn: "HM टेक्नॉलॉजीमध्ये लॉगिन करा",
+    login_note: "नवीन आहात? डेमो पाहण्यासाठी कोणताही ईमेल आणि पासवर्ड टाका.",
+    login_error: "कृपया ईमेल आणि पासवर्ड दोन्ही भरा.",
+    processing_title: "तुमचं वर्कस्पेस तयार होत आहे",
+    processing_sub: "HM टेक्नॉलॉजी सर्व्हरशी जोडत आहोत…",
+    hero_eyebrow: "एचएम टेक्नॉलॉजी",
+    hero_title: "माणसासारखी बुद्धिमत्ता, मशीनसारखा वेग.",
+    hero_desc: "HM टेक्नॉलॉजी एआय टूल्स, क्लाउड सिस्टीम आणि डिजिटल प्रॉडक्ट्स तयार करते, जी लोकांना आणि व्यवसायांना अधिक वेगाने पुढे जाण्यास मदत करतात — भारतात डिझाइन केलेलं, जगासाठी तयार केलेलं.",
+    hero_cta1: "प्रॉडक्ट्स पहा",
+    hero_cta2: "आमच्या एआयशी बोला",
+    search_placeholder: "प्रॉडक्ट्स, सेवा, लेख शोधा…",
+    search_btn: "शोधा",
+    search_empty: "काहीही सापडलं नाही. दुसरा शब्द वापरून पहा.",
+    features_eyebrow: "आम्ही काय तयार करतो",
+    features_title: "तुमचा दिवस सोपा करणारे प्रॉडक्ट्स",
+    f1_title: "HM असिस्टंट",
+    f1_desc: "मराठी, हिंदी आणि इंग्रजी समजणारा संवादी एआय असिस्टंट — प्रत्येक HM प्रॉडक्टमध्ये अंतर्भूत.",
+    f2_title: "क्लाउड सुइट",
+    f2_desc: "स्टार्टअप्स आणि एंटरप्राइजेससाठी सुरक्षित, वाढवता येणारी क्लाउड इन्फ्रास्ट्रक्चर.",
+    f3_title: "स्मार्ट अॅनालिटिक्स",
+    f3_desc: "रिअल-टाइम डॅशबोर्ड्स जे डेटाचं रूपांतर तात्काळ निर्णयांमध्ये करतात.",
+    gallery_eyebrow: "एचएमच्या आत",
+    gallery_title: "आमच्या जगाची एक झलक",
+    g1: "आमची इंजिनिअरिंग टीम",
+    g2: "एआय रिसर्च लॅब",
+    g3: "टीम सहकार्य",
+    g4: "प्रॉडक्ट डिझाइन स्टुडिओ",
+    footer_rights: "© 2026 एचएम टेक्नॉलॉजी. सर्व हक्क राखीव.",
+    footer_tag: "कुतूहलातून घडवलेलं, काळजीपूर्वक सादर केलेलं.",
+    auto_eyebrow: "ऑटोमेशन कामावर",
+    auto_title: "तुम्ही झोपलेले असतानाही काम करणारे रोबोट्स",
+    auto_desc: "HM टेक्नॉलॉजीचं ऑटोमेशन इंजिन बॅकग्राउंडमध्ये बॉट्स चालवतं — जे डेटा सिंक करतात, प्रश्नांची उत्तरं देतात आणि सिस्टीमवर लक्ष ठेवतात — दिवसरात्र, प्रत्येक भाषेत.",
+    bot1: "सिंक बॉट", bot2: "टास्क बॉट", bot3: "मॉनिटर बॉट", bot4: "चॅट बॉट", bot5: "रिपोर्ट बॉट",
+    astep1: "डेटा येतो आत — sensors आणि apps मधून.",
+    astep2: "बॉट्स तो डेटा स्वच्छ करून तपासतात.",
+    astep3: "एआय निर्णय घेतो व पुढची पायरी ठरवतो.",
+    astep4: "तुम्हाला फक्त निकाल दिसतो — instantly.",
+    video_eyebrow: "प्रत्यक्ष कृतीत पहा",
+    video_title: "HM टेक्नॉलॉजीच्या आतला एक दिवस",
+    video_note: "सॅम्पल शोकेस व्हिडिओ — हा कधीही तुमच्या स्वतःच्या प्रॉडक्ट डेमोने बदलू शकता.",
+    chat_title: "HM असिस्टंट",
+    chat_greet: "नमस्कार! मी HM असिस्टंट आहे. आमच्या प्रॉडक्ट्सबद्दल विचारा, किंवा मराठी, हिंदी किंवा इंग्रजीत नमस्कार म्हणा.",
+    chat_placeholder: "इथे लिहा…",
+    chat_fallback: "छान प्रश्न आहे — आमच्या टीमला मदत करायला आवडेल. 'products', 'pricing' किंवा 'contact' बद्दल विचारून पहा."
+  }
+};
+
+function hmGetLang(){ return localStorage.getItem('hm_lang') || 'mr'; }
+function hmSetLang(lang){
+  localStorage.setItem('hm_lang', lang);
+  hmApplyLang();
+}
+function hmApplyLang(){
+  const lang = hmGetLang();
+  const dict = HM_I18N[lang] || HM_I18N.mr;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    if(dict[key] !== undefined) el.textContent = dict[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const key = el.getAttribute('data-i18n-placeholder');
+    if(dict[key] !== undefined) el.placeholder = dict[key];
+  });
+  document.querySelectorAll('.lang-switch button').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  document.documentElement.lang = lang;
+}
+function hmInitLangSwitch(){
+  document.querySelectorAll('.lang-switch button').forEach(btn=>{
+    btn.addEventListener('click', ()=> hmSetLang(btn.dataset.lang));
+  });
+  hmApplyLang();
+}
+
+/* ---------------- LOGIN PAGE ---------------- */
+function hmInitLogin(){
+  const form = document.getElementById('loginForm');
+  if(!form) return;
+  const errorEl = document.getElementById('loginError');
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    const dict = HM_I18N[hmGetLang()];
+    if(!email || !pass){
+      errorEl.textContent = dict.login_error;
+      return;
+    }
+    localStorage.setItem('hm_user_email', email);
+    window.location.href = 'processing.html';
+  });
+}
+
+/* ---------------- PROCESSING PAGE ---------------- */
+function hmInitProcessing(){
+  const fill = document.getElementById('progressFill');
+  if(!fill) return;
+  let pct = 0;
+  const timer = setInterval(()=>{
+    pct += Math.random()*18 + 8;
+    if(pct >= 100){
+      pct = 100;
+      clearInterval(timer);
+      setTimeout(()=>{ window.location.href = 'index.html'; }, 400);
+    }
+    fill.style.width = pct + '%';
+  }, 260);
+}
+
+/* ---------------- SEARCH ---------------- */
+function hmInitSearch(){
+  const input = document.getElementById('siteSearch');
+  const btn = document.getElementById('searchBtn');
+  if(!input) return;
+  const items = document.querySelectorAll('[data-keywords]');
+  const emptyMsg = document.getElementById('searchEmpty');
+
+  function runSearch(){
+    const q = input.value.trim().toLowerCase();
+    let visibleCount = 0;
+    items.forEach(item=>{
+      const kws = item.getAttribute('data-keywords').toLowerCase();
+      const match = q === '' || kws.includes(q);
+      item.style.display = match ? '' : 'none';
+      if(match) visibleCount++;
+    });
+    if(emptyMsg) emptyMsg.style.display = (q !== '' && visibleCount === 0) ? 'block' : 'none';
+  }
+  input.addEventListener('input', runSearch);
+  if(btn) btn.addEventListener('click', runSearch);
+}
+
+/* ---------------- AI CHATBOT (rule-based, offline) ---------------- */
+const HM_BOT_RULES = [
+  { test: /(hello|hi|namaste|नमस्ते|नमस्कार|हॅलो)/i, reply: {
+      en: "Hello! How can I help you explore HM Technology today?",
+      hi: "नमस्ते! आज मैं आपकी कैसे मदद कर सकता हूं?",
+      mr: "नमस्कार! आज मी तुम्हाला कशी मदत करू शकतो?" } },
+  { test: /(product|प्रोडक्ट|उत्पाद)/i, reply: {
+      en: "We build HM Assistant, Cloud Suite and Smart Analytics — try the search bar above to explore them!",
+      hi: "हम HM असिस्टेंट, क्लाउड सुइट और स्मार्ट एनालिटिक्स बनाते हैं — ऊपर सर्च बार में खोजें!",
+      mr: "आम्ही HM असिस्टंट, क्लाउड सुइट आणि स्मार्ट अॅनालिटिक्स तयार करतो — वरच्या सर्च बारमध्ये शोधा!" } },
+  { test: /(price|pricing|cost|किंमत|दाम|मूल्य)/i, reply: {
+      en: "Pricing depends on your team size — our sales team can share a custom quote.",
+      hi: "कीमत आपकी टीम के आकार पर निर्भर करती है — हमारी सेल्स टीम आपको कोटेशन देगी।",
+      mr: "किंमत तुमच्या टीमच्या आकारावर अवलंबून असते — आमची सेल्स टीम तुम्हाला कोटेशन देईल." } },
+  { test: /(contact|email|संपर्क|ईमेल)/i, reply: {
+      en: "You can reach us at hello@hmtechnology.example — we usually reply within a day.",
+      hi: "आप hello@hmtechnology.example पर संपर्क कर सकते हैं — हम आमतौर पर एक दिन में जवाब देते हैं।",
+      mr: "तुम्ही hello@hmtechnology.example वर संपर्क करू शकता — आम्ही साधारण एका दिवसात उत्तर देतो." } },
+  { test: /(thank|धन्यवाद|thanks)/i, reply: {
+      en: "You're welcome! Happy to help anytime.",
+      hi: "आपका स्वागत है! कभी भी पूछें।",
+      mr: "स्वागत आहे! कधीही विचारा." } }
+];
+
+function hmBotReply(message){
+  const lang = hmGetLang();
+  for(const rule of HM_BOT_RULES){
+    if(rule.test.test(message)) return rule.reply[lang] || rule.reply.en;
+  }
+  return HM_I18N[lang].chat_fallback;
+}
+
+function hmInitChatbot(){
+  const toggle = document.getElementById('chatToggle');
+  const panel = document.getElementById('chatPanel');
+  const closeBtn = document.getElementById('chatClose');
+  const body = document.getElementById('chatBody');
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('chatInput');
+  if(!toggle) return;
+
+  let greeted = false;
+  toggle.addEventListener('click', ()=>{
+    panel.classList.toggle('open');
+    if(!greeted){
+      addMsg(HM_I18N[hmGetLang()].chat_greet, 'bot');
+      greeted = true;
+    }
+  });
+  closeBtn.addEventListener('click', ()=> panel.classList.remove('open'));
+
+  function addMsg(text, who){
+    const div = document.createElement('div');
+    div.className = 'msg ' + who;
+    div.textContent = text;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const text = input.value.trim();
+    if(!text) return;
+    addMsg(text, 'user');
+    input.value = '';
+    setTimeout(()=> addMsg(hmBotReply(text), 'bot'), 350);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  hmInitLangSwitch();
+  hmInitLogin();
+  hmInitProcessing();
+  hmInitSearch();
+  hmInitChatbot();
+});
+
+</script>
+</body>
+</html>
